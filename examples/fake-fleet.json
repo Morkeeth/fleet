@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "fleet": {
+    "name": "example-fleet",
+    "state_file": "./.fleet-state.json"
+  },
+  "projects": [
+    { "name": "api",      "root": "./sandbox/api",      "lane": "backend" },
+    { "name": "web",      "root": "./sandbox/web",      "lane": "frontend" },
+    { "name": "infra",    "root": "./sandbox/infra",    "lane": "platform" }
+  ],
+  "agents": {
+    "provider": "claude-code",
+    "transport": "local"
+  },
+  "approval": {
+    "irreversible": "ask",
+    "outward_facing": "ask"
+  },
+  "outcomes": [
+    { "name": "shipped",  "definition": "someone outside the team used it" },
+    { "name": "internal", "definition": "an instrument that serves the team - a valid outcome" },
+    { "name": "dropped",  "definition": "stopped on purpose, with the reason recorded" }
+  ],
+  "transcripts": [
+    { "provider": "claude-code", "glob": "~/.claude/projects/*/*.jsonl" },
+    { "provider": "codex" }
+  ]
+}

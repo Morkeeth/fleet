@@ -1,0 +1,6 @@
+# The state file is per-fleet operational data, never the repo's business.
+.fleet-state.json
+examples/.fleet-state.json
+examples/sandbox/
+__pycache__/
+*.pyc

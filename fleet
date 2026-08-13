@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""fleet — open, inspect and cost a fleet of coding agents from one config.
+
+  fleet open      read the config, check every project root, print the lane table
+  fleet status    what the fleet recorded last, from the state file
+  fleet cost      real token spend from the harness's own logs (never self-report)
+
+Every command reads fleet.yaml / fleet.json. Nothing is hardcoded to one person's
+machine — that was the whole finding of the review this repo came out of.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from fleet_ops import cost as cost_mod  # noqa: E402
+from fleet_ops.config import Config, ConfigError, load  # noqa: E402
+
+DIM, BOLD, RESET = "\033[2m", "\033[1m", "\033[0m"
+
+
+def _git(root: Path, *args: str) -> str | None:
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), *args],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def _project_state(root: Path) -> dict:
+    """What is true about this checkout right now. Absence is reported as absence."""
+    if not root.exists():
+        return {"exists": False}
+    if not (root / ".git").exists():
+        return {"exists": True, "git": False}
+    dirty = _git(root, "status", "--porcelain")
+    return {
+        "exists": True,
+        "git": True,
+        "branch": _git(root, "rev-parse", "--abbrev-ref", "HEAD"),
+        "last": _git(root, "log", "-1", "--format=%ad|%s", "--date=short"),
+        "dirty": len([ln for ln in (dirty or "").splitlines() if ln.strip()]),
+    }
+
+
+def cmd_open(cfg: Config, _args) -> int:
+    print(f"\n{BOLD}▟ {cfg.name}{RESET}  {DIM}{cfg.path}{RESET}\n")
+
+    agents = cfg.agents
+    ap = cfg.approval
+    print(f"  provider {agents['provider']} · transport {agents['transport']}")
+    print(f"  approval: irreversible={ap['irreversible']} · outward_facing={ap['outward_facing']}")
+    if ap["irreversible"] == "auto" or ap["outward_facing"] == "auto":
+        print(f"  {BOLD}!{RESET} an 'auto' approval means no human sees the act before it happens.")
+    print()
+
+    missing = 0
+    print(f"  {'PROJECT':<18}{'LANE':<14}{'BRANCH':<22}{'DIRTY':>6}  LAST")
+    print("  " + "-" * 74)
+    for p in cfg.projects:
+        root = cfg.project_root(p)
+        st = _project_state(root)
+        lane = str(p.get("lane", "—"))[:13]
+        if not st["exists"]:
+            missing += 1
+            print(f"  {p['name']:<18}{lane:<14}{'MISSING: ' + str(root):<50}")
+            continue
+        if not st.get("git"):
+            print(f"  {p['name']:<18}{lane:<14}{'(not a git repo)':<22}{'':>6}")
+            continue
+        dirty = st["dirty"]
+        flag = f"{dirty}" if dirty else "—"
+        print(f"  {p['name']:<18}{lane:<14}{str(st['branch'])[:21]:<22}{flag:>6}  {st['last'] or ''}")
+
+    print()
+    for oc in cfg.outcomes:
+        print(f"  {DIM}outcome{RESET} {oc.get('name','?'):<12} {oc.get('definition','')}")
+    if cfg.outcomes:
+        print()
+
+    state = cfg.state_file
+    print(f"  state file: {state} {DIM}({'present' if state.exists() else 'not created yet'}){RESET}")
+
+    if missing:
+        print(f"\n  {BOLD}{missing} project root(s) missing.{RESET} Fix the paths in {cfg.path.name}.\n")
+        return 1
+    print()
+    return 0
+
+
+def cmd_status(cfg: Config, _args) -> int:
+    state = cfg.state_file
+    if not state.exists():
+        print(f"\n  no state yet at {state}")
+        print(f"  {DIM}`fleet open` describes the fleet; state appears once a run records one.{RESET}\n")
+        return 0
+    try:
+        data = json.loads(state.read_text())
+    except (OSError, ValueError) as e:
+        print(f"\n  state file unreadable: {e}\n")
+        return 1
+    print(f"\n{BOLD}▟ {cfg.name} — recorded state{RESET}  {DIM}{state}{RESET}\n")
+    lanes = data.get("lanes") or []
+    if not lanes:
+        print("  state file has no 'lanes' list.\n")
+        return 0
+    for lane in lanes:
+        name = lane.get("name", "?")
+        outcome = lane.get("outcome", "—")
+        claim = lane.get("artifact") or lane.get("claim") or ""
+        print(f"  {name:<20}{outcome:<14}{claim}")
+    print()
+    return 0
+
+
+def cmd_cost(cfg: Config, args) -> int:
+    since = dt.datetime.fromisoformat(args.since) if args.since else None
+    sources = cfg.transcripts
+    if not sources:
+        print("\n  no 'transcripts' configured — nothing to read.")
+        print(f"  {DIM}Add a transcripts: entry naming a provider and a glob.{RESET}\n")
+        return 0
+    rows, skipped = cost_mod.collect(sources, since)
+    print(f"\n{'OUT_TOK':>11} {'TURNS':>6} {'CACHE_RD':>12} {'WALL':>7} {'LAST':>19}  SESSION")
+    for r in rows[: args.limit]:
+        wall = r.wall_minutes
+        print(f"{r.output:>11,} {r.turns:>6} {r.cache_read:>12,} "
+              f"{(f'{wall:.0f}m' if wall is not None else ''):>7} {(r.last or ''):>19}  {r.session}")
+    shown = rows[: args.limit]
+    print("-" * 11)
+    print(f"{sum(r.output for r in shown):>11,}  output tokens in the {len(shown)} row(s) shown")
+    if len(rows) > len(shown):
+        print(f"{sum(r.output for r in rows):>11,}  GRAND TOTAL across all {len(rows)} sessions")
+    for s in skipped:
+        print(f"{DIM}     not counted: {s}{RESET}")
+    if not rows:
+        print(f"{DIM}     no sessions matched — the total above is 0 because nothing was read, "
+              f"not because nothing was spent.{RESET}")
+    print()
+    return 0
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(prog="fleet", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--config", help="path to fleet.yaml / fleet.json")
+    sub = ap.add_subparsers(dest="cmd")
+    sub.add_parser("open", help="check every project root, print the lane table")
+    sub.add_parser("status", help="what the fleet recorded last")
+    c = sub.add_parser("cost", help="real token spend from harness logs")
+    c.add_argument("--since", help="ISO datetime, e.g. 2026-08-13T00:00")
+    c.add_argument("--limit", type=int, default=20)
+    args = ap.parse_args()
+
+    if not args.cmd:
+        ap.print_help()
+        return 2
+    try:
+        cfg = load(Path(args.config) if args.config else None)
+    except ConfigError as e:
+        print(f"\nFATAL: {e}\n", file=sys.stderr)
+        return 1
+    return {"open": cmd_open, "status": cmd_status, "cost": cmd_cost}[args.cmd](cfg, args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
