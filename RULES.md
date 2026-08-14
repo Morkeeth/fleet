@@ -38,6 +38,19 @@ cost, and it is the only defence against a green board over live defects.
 
 _How to tell:_ `fleet status` prints the artifact column. An empty artifact is visible.
 
+_Who types it, and why that is the weak part:_ `fleet record` is meant to be typed by the
+human, not called by the agent. If the agent writes its own record, the artifact column is
+authored by the thing being measured, and rule 2 becomes self-certifying — a rule that can
+be satisfied by its own subject is not a control, it is a formality with a green tick.
+
+The cost of that choice is real and it is the failure this file demotes other rules for:
+this is enforced by someone remembering to type it. We took the weaker enforcement over
+the stronger-looking one because the stronger-looking one lets the executor grade itself.
+
+The honest third option — a record written by something that watches the agent, rather than
+by the agent or by the human — does not exist here. That is the open problem, named rather
+than papered over.
+
 ## 3. One agent, one worktree
 
 **Two agents editing one checkout will lose work**, and the loss is silent — the second
