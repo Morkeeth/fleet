@@ -107,8 +107,8 @@ fleet:
 projects:
   - {name: api, root: ./sandbox/api, lane: backend}
 agents:
-  provider: claude-code      # which harness your agents run in
-  transport: local
+  provider: claude-code      # claude-code | codex | cursor
+  transport: local           # local is the only value — see below
 approval:
   irreversible: ask          # ask | auto | never
   outward_facing: ask
@@ -119,7 +119,9 @@ transcripts:
   - {provider: claude-code, glob: ~/.claude/projects/*/*.jsonl}
 ```
 
-An unknown top-level key is an error, not a shrug. A typo that silently does nothing is the failure this repo exists to fight.
+An unknown top-level key is an error, not a shrug. A typo that silently does nothing is the failure this repo exists to fight — and that applies to values, not just keys: `agents.provider` and `agents.transport` are checked against their allowed sets the same way `approval` is.
+
+**`transport: local` is the only transport, because cross-session messaging is same-machine only.** The sessions talk through the local harness. There is no remote transport to configure, so naming one fails rather than quietly implying a capability that does not exist.
 
 ## What it will not do
 

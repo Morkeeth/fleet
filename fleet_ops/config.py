@@ -14,12 +14,25 @@ import json
 import os
 from pathlib import Path
 
+from fleet_ops import cost
+
 VERSION = 1
 
 # Anything not in here is a typo, and a typo that silently does nothing is worse
 # than an error — that is the whole failure class this repo exists to fight.
 TOP_LEVEL = {"version", "fleet", "projects", "agents", "approval", "outcomes", "transcripts"}
 APPROVAL_VALUES = {"ask", "auto", "never"}
+
+# The same argument one level down. `approval` values were validated from the
+# start and these were not, so an unknown key was an error while an unknown
+# VALUE was a shrug — `transport: ssh` loaded, printed, and did nothing.
+# Sourced from the cost adapters so the two lists cannot drift apart.
+# "unset" is in the set because the accessor already returns it when the key is
+# absent; rejecting the value the tool itself prints would be its own small lie.
+AGENT_PROVIDERS = cost.SUPPORTED | cost.DECLARED_UNSUPPORTED | {"unset"}
+# Cross-session messaging is same-machine only. There is no remote transport to
+# name, so naming one has to fail rather than imply a capability that is absent.
+TRANSPORTS = {"local"}
 
 
 class ConfigError(Exception):
@@ -105,6 +118,14 @@ class Config:
                 raise ConfigError(
                     f"{self.path.name}: approval.{key} is {val!r}; expected one of "
                     f"{', '.join(sorted(APPROVAL_VALUES))}."
+                )
+        agents = d.get("agents") or {}
+        for key, allowed in (("provider", AGENT_PROVIDERS), ("transport", TRANSPORTS)):
+            val = agents.get(key)
+            if val is not None and val not in allowed:
+                raise ConfigError(
+                    f"{self.path.name}: agents.{key} is {val!r}; expected one of "
+                    f"{', '.join(sorted(allowed))}."
                 )
 
     # -- accessors ----------------------------------------------------------
