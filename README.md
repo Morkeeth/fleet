@@ -81,11 +81,24 @@ Requires `python3` and `git`. Nothing else. PyYAML is optional — the config wo
 
 | | |
 |---|---|
-| `fleet open` | check every project root, print the lane table, show the approval policy |
+| `fleet open` | check every project root, print the lane table, flag work that exists nowhere else |
 | `fleet status` | what the fleet recorded last, each lane bound to the artifact that proves it |
 | `fleet cost` | real token spend, read from the harness's own logs — and what it did **not** count |
 
 Each reads the nearest `fleet.yaml` or `fleet.json`, or `--config PATH`.
+
+**The `ONLY HERE` column is the one to look at first.** `DIRTY` counts work that exists only
+in a working tree; `ONLY HERE` counts work that exists only on this disk — commits no remote
+ref on this machine has seen, or a repo with no remote at all. It needs no config and it
+returns a real answer on a stranger's first run, which is not true of anything else here.
+
+It is measured as `git rev-list --count HEAD --not --remotes`, against every remote ref
+rather than the branch's upstream, because a branch with no upstream is the ordinary case
+and `@{u}` errors there instead of answering. It cannot know whether the same work was
+pushed from another machine, and remote-tracking refs are only as fresh as your last fetch.
+The count also moves while you read it — two people measuring the same repos minutes apart
+got different answers and neither was wrong — which is why it is computed on demand and
+never written into a document.
 
 ### What a fleet costs, and what this will not tell you
 
