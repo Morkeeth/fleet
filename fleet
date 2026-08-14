@@ -3,6 +3,7 @@
 
   fleet open      read the config, check every project root, print the lane table
   fleet status    what the fleet recorded last, from the state file
+  fleet record    record a lane's outcome and the artifact that proves it
   fleet cost      real token spend from the harness's own logs (never self-report)
 
 Every command reads fleet.yaml / fleet.json. Nothing is hardcoded to one person's
@@ -88,7 +89,8 @@ def cmd_open(cfg: Config, _args) -> int:
         print()
 
     state = cfg.state_file
-    print(f"  state file: {state} {DIM}({'present' if state.exists() else 'not created yet'}){RESET}")
+    hint = "present" if state.exists() else "not created yet · `fleet record` writes it"
+    print(f"  state file: {state} {DIM}({hint}){RESET}")
 
     if missing:
         print(f"\n  {BOLD}{missing} project root(s) missing.{RESET} Fix the paths in {cfg.path.name}.\n")
@@ -108,17 +110,57 @@ def cmd_status(cfg: Config, _args) -> int:
     except (OSError, ValueError) as e:
         print(f"\n  state file unreadable: {e}\n")
         return 1
+    if not isinstance(data, dict):
+        print(f"\n  state file is {type(data).__name__}, not an object.\n")
+        return 1
     print(f"\n{BOLD}▟ {cfg.name} — recorded state{RESET}  {DIM}{state}{RESET}\n")
     lanes = data.get("lanes") or []
     if not lanes:
         print("  state file has no 'lanes' list.\n")
         return 0
     for lane in lanes:
+        if not isinstance(lane, dict):
+            print(f"  {DIM}skipped a row that is not an object: {lane!r}{RESET}")
+            continue
         name = lane.get("name", "?")
         outcome = lane.get("outcome", "—")
         claim = lane.get("artifact") or lane.get("claim") or ""
         print(f"  {name:<20}{outcome:<14}{claim}")
     print()
+    return 0
+
+
+def cmd_record(cfg: Config, args) -> int:
+    """Write one lane's claim. Rule 2 says a claim names the thing that proves it; until
+    something wrote the file, `fleet status` could only ever say 'no state yet', which made
+    the rule's own enforcement mechanism a rule nobody could check."""
+    names = [oc.get("name") for oc in cfg.outcomes]
+    if names and args.outcome not in names:
+        print(f"\n  '{args.outcome}' is not an outcome in {cfg.path.name} — "
+              f"choose from: {', '.join(str(n) for n in names)}\n")
+        return 1
+    state = cfg.state_file
+    data: dict = {"lanes": []}
+    if state.exists():
+        try:
+            data = json.loads(state.read_text())
+        except (OSError, ValueError) as e:
+            # Refuse rather than clobber: this file may hold the only record of a run.
+            print(f"\n  state file unreadable, refusing to overwrite it: {e}\n")
+            return 1
+        if not isinstance(data, dict):
+            print(f"\n  state file is {type(data).__name__}, not an object — refusing to overwrite.\n")
+            return 1
+    # Re-recording a lane replaces its row. Two rows for one lane is the ambiguity
+    # rule 2 exists to remove.
+    lanes = [ln for ln in (data.get("lanes") or []) if not (
+        isinstance(ln, dict) and ln.get("name") == args.lane)]
+    lanes.append({"name": args.lane, "outcome": args.outcome, "artifact": args.artifact})
+    data["lanes"] = lanes
+    state.parent.mkdir(parents=True, exist_ok=True)
+    state.write_text(json.dumps(data, indent=2) + "\n")
+    print(f"\n  recorded  {args.lane} · {args.outcome} · {args.artifact}")
+    print(f"  {DIM}{state}{RESET}\n")
     return 0
 
 
@@ -156,6 +198,8 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd")
     sub.add_parser("open", help="check every project root, print the lane table")
     sub.add_parser("status", help="what the fleet recorded last")
+    r = sub.add_parser("record", help="record a lane's outcome and the artifact proving it")
+    r.add_argument("lane"); r.add_argument("outcome"); r.add_argument("artifact")
     c = sub.add_parser("cost", help="real token spend from harness logs")
     c.add_argument("--since", help="ISO datetime, e.g. 2026-08-13T00:00")
     c.add_argument("--limit", type=int, default=20)
@@ -169,7 +213,8 @@ def main() -> int:
     except ConfigError as e:
         print(f"\nFATAL: {e}\n", file=sys.stderr)
         return 1
-    return {"open": cmd_open, "status": cmd_status, "cost": cmd_cost}[args.cmd](cfg, args)
+    return {"open": cmd_open, "status": cmd_status,
+            "record": cmd_record, "cost": cmd_cost}[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":
