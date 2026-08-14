@@ -87,9 +87,9 @@ Each reads the nearest `fleet.yaml` or `fleet.json`, or `--config PATH`.
 
 ### What a fleet costs, and what this will not tell you
 
-Run 1 was four lanes over three days, 11 to 13 August. The Claude Code harness recorded **19,854,778 output tokens** in that window, measured on 14 August.
+Run 1 was four lanes over three days, 11 to 13 August. The Claude Code harness recorded **19,854,778 output tokens** in that window — measured on 14 August, in a window that was not frozen when it was first measured, so read it as a floor and not as a total.
 
-Read it as a floor, not a total. An earlier extraction of the same window returned 19,027,962 — not because more work happened in between, but because the window had not been frozen when it was first measured. It also excludes every other vendor, all cache reads, all input tokens, and every minute of human time.
+An earlier extraction of the same window returned 19,027,962, not because more work happened in between but because the boundary moved. The figure also excludes every other vendor, all cache reads, all input tokens, and every minute of human time. It is a warning about order of magnitude, not a score.
 
 A number like this is only admissible with its window attached. Quoted bare it is the same figure and a much worse claim, which is why you will see it stated here and cut from anywhere that could not name the window.
 
