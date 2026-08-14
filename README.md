@@ -12,11 +12,14 @@ $ fleet open
   provider claude-code · transport local
   approval: irreversible=ask · outward_facing=ask
 
-  PROJECT           LANE          BRANCH                 DIRTY  LAST
-  --------------------------------------------------------------------------
-  api               backend       main                       —  2026-08-13|init api
-  web               frontend      main                       1  2026-08-13|init web
-  infra             platform      main                       —  2026-08-13|init infra
+  PROJECT           LANE          BRANCH               DIRTY  ONLY HERE  LAST
+  ------------------------------------------------------------------------------------
+  api               backend       main                     —  no remote  2026-08-13|init api
+  web               frontend      main                     1  no remote  2026-08-13|init web
+  infra             platform      main                     —  no remote  2026-08-13|init infra
+
+  ONLY HERE is work that exists on this disk and nowhere else — commits no remote
+    ref on this machine has seen, or a repo with no remote at all.
 ```
 
 ## The finding this came out of
