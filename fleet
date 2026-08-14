@@ -65,10 +65,12 @@ def cmd_open(cfg: Config, _args) -> int:
     print()
 
     missing = 0
+    shared: dict[str, list[str]] = {}
     print(f"  {'PROJECT':<18}{'LANE':<14}{'BRANCH':<22}{'DIRTY':>6}  LAST")
     print("  " + "-" * 74)
     for p in cfg.projects:
         root = cfg.project_root(p)
+        shared.setdefault(str(root.resolve() if root.exists() else root), []).append(p["name"])
         st = _project_state(root)
         lane = str(p.get("lane", "—"))[:13]
         if not st["exists"]:
@@ -83,6 +85,18 @@ def cmd_open(cfg: Config, _args) -> int:
         print(f"  {p['name']:<18}{lane:<14}{str(st['branch'])[:21]:<22}{flag:>6}  {st['last'] or ''}")
 
     print()
+    # Rule 3 is one agent, one WORKTREE. Two lanes on the same branch in different
+    # repos is normal and this tool's own example looks exactly like that; two lanes
+    # pointed at one checkout is the bug, and it is a comparison across rows that no
+    # reader reliably makes by eye past about six projects.
+    for root, names in shared.items():
+        if len(names) > 1:
+            print(f"  {BOLD}! rule 3:{RESET} {', '.join(names)} share one checkout — {root}")
+            print(f"    {DIM}the second write wins and nothing reports the first. "
+                  f"git worktree add, or one writer.{RESET}")
+    if any(len(n) > 1 for n in shared.values()):
+        print()
+
     for oc in cfg.outcomes:
         print(f"  {DIM}outcome{RESET} {oc.get('name','?'):<12} {oc.get('definition','')}")
     if cfg.outcomes:

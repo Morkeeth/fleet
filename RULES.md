@@ -61,8 +61,15 @@ agent writes.
 
 _Why it survived:_ the failure is data loss, and it is not recoverable by being careful.
 
-_How to tell:_ `fleet open` prints branch and dirty-count per project. Two lanes on one
-branch with uncommitted work is the shape of the bug.
+_How to tell:_ `fleet open` compares the resolved root of every project and prints a
+`! rule 3` line when two lanes point at one checkout.
+
+This sentence used to say "two lanes on one branch with uncommitted work is the shape of
+the bug", and that was wrong in a way worth recording. Two lanes on `main` in two different
+repos is completely normal — the example config shipped in this repo looks exactly like
+that, so a reader following the old advice would have found the bug in the demo. The branch
+is not the signal. **The checkout is.** And it is a comparison across rows, which no reader
+makes reliably by eye past about six projects, which is why it is the tool's job now.
 
 ## 4. Measure spend from the harness, never from the agent
 
