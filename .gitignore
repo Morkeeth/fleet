@@ -4,3 +4,6 @@ examples/.fleet-state.json
 examples/sandbox/
 __pycache__/
 *.pyc
+
+# Internal spec. Never publishes — this repo is public.
+PRODUCT.md
