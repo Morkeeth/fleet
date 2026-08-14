@@ -62,6 +62,18 @@ Both reviewed arms had tests that passed but were not discoverable under plain `
 
 **Operating conclusion:** solo for bounded implementation, one blocker by default for measurement, security and release claims, the full fleet when malformed input or adversarial judgement can change the answer.
 
+### Why a cost/accuracy frontier would have picked the loser too
+
+The standard fix for a single-axis rule is to put cost on the other axis and take the Pareto frontier — [Kapoor et al.](https://arxiv.org/abs/2407.01502) show that once inference cost is plotted against accuracy, simple baselines are Pareto-efficient over complex agents and the leaderboard rank stops being the interesting object.
+
+We ran that on this experiment, using the cost proxy the protocol registered before the run: agent turns. Solo is 91 at 1 turn, executor+blocker 95 at 2, small fleet 100 at 3.
+
+**All three are on the frontier.** None is dominated: no arm is both cheaper and better than any other. So a cost/accuracy Pareto view would have left solo standing as a legitimate, cheapest-on-the-curve choice — the same arm the registered rule picked, and the one shipping two crash paths.
+
+Only the defect count removes it, and it removes it as a **gate rather than an axis**: a candidate with a known correctness defect is not a cheaper point on a curve, it is not a candidate. Apply that first and the frontier has one member.
+
+The lesson is not that Pareto scoring is wrong. It is that cost-versus-outcome is **necessary and not sufficient**, and that correctness has to filter the candidate set before anything is plotted. A frontier drawn over defective candidates is a well-formed answer to the wrong question.
+
 ### Run it yourself, on your own data
 
 This ships the instrument, not the readings. You point it at your own harness logs and your own repos and generate your own numbers; nothing from ours travels with it. Run 1 appears above only as aggregates.
