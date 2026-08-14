@@ -29,6 +29,8 @@ Three topologies, one task, and the decision rule written down before the run: *
 | Executor + blocker | 2 | 95 | 1 |
 | Solo executor | 1 | 91 | 2 |
 
+**Each arm is a single run, so read the scores as weak and the defect column as strong.** Published work on multi-run consistency reports agents dropping from about 60% at one run to about 25% when all eight runs must pass, which is far larger than the five points separating our top two arms. We would not defend "95 beats 91" from n=1. We will defend "0 crash paths beats 2", because a defect either exists or it does not and no amount of resampling turns two into zero. The finding below rests on the defect column, not on the ranking.
+
 All three fixed the primary bug. The difference appeared only on adversarial inputs. Solo scored 91, so **under the registered rule, solo wins** — and solo ships two crash paths.
 
 The rule was not changed after the scores came in. It is defective: economy must never override a known correctness defect. The corrected version is below.
