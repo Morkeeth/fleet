@@ -1,8 +1,8 @@
-# fleet-ops
+# fleet
 
 **You are running several coding agents at once and you cannot see which one is stuck, what any of them actually finished, or what it cost.**
 
-`fleet-ops` reads one config file and answers those three questions with things it checked, not things an agent told it.
+`fleet` reads one config file and answers those three questions with things it checked, not things an agent told it.
 
 ```
 $ fleet open
@@ -24,7 +24,8 @@ $ fleet open
 No config of your own, no agents, no setup. This builds three throwaway repos under `examples/sandbox/` and runs against them:
 
 ```sh
-git clone <this repo> && cd fleet-ops
+git clone https://github.com/Morkeeth/fleet.git
+cd fleet
 ./examples/cold-start.sh            # then --clean to remove the sandbox
 ```
 
