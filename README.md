@@ -91,6 +91,8 @@ Run 1 was four lanes over three days, 11 to 13 August. The Claude Code harness r
 
 Read it as a floor, not a total. An earlier extraction of the same window returned 19,027,962 — not because more work happened in between, but because the window had not been frozen when it was first measured. It also excludes every other vendor, all cache reads, all input tokens, and every minute of human time.
 
+A number like this is only admissible with its window attached. Quoted bare it is the same figure and a much worse claim, which is why you will see it stated here and cut from anywhere that could not name the window.
+
 No dollar figure here. We have no vendor-side total, and converting one would be inventing a number.
 
 **Nothing in this repo caps or projects spend.** `fleet cost` is post-hoc — it tells you what a run cost after it has cost it. A ceiling has to come from your vendor's own controls, and if you are about to point four lanes at three days of work, set one first.
