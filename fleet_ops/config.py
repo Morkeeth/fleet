@@ -162,7 +162,20 @@ class Config:
 
     @property
     def transcripts(self) -> list[dict]:
-        return list(self.raw.get("transcripts") or [])
+        """Globs resolve against the config file, exactly like project roots.
+
+        They did not, which meant `projects[].root` and `transcripts[].glob` read
+        the same relative string as two different places depending on the caller's
+        working directory. A path that means something else depending on where you
+        stand is the same failure class as a window that moves while you measure it.
+        """
+        out = []
+        for src in (self.raw.get("transcripts") or []):
+            src = dict(src)
+            if src.get("glob"):
+                src["glob"] = str(self._resolve(src["glob"]))
+            out.append(src)
+        return out
 
     def project_root(self, project: dict) -> Path:
         return self._resolve(project["root"])

@@ -1,0 +1,4 @@
+{"type": "event_msg", "timestamp": "2026-08-14T09:00:00", "payload": {"type": "token_count", "info": {"last_token_usage": {"output_tokens": 500, "input_tokens": 100, "cached_input_tokens": 0}, "total_token_usage": {"output_tokens": 500, "input_tokens": 100, "cached_input_tokens": 0}}}}
+{"type": "event_msg", "timestamp": "2026-08-14T09:05:00", "payload": {"type": "token_count", "info": {"last_token_usage": {"output_tokens": 700, "input_tokens": 150, "cached_input_tokens": 40}, "total_token_usage": {"output_tokens": 1200, "input_tokens": 250, "cached_input_tokens": 40}}}}
+{"type": "event_msg", "timestamp": "2026-08-14T09:06:00", "payload": {"type": "token_count", "info": {"last_token_usage": {"output_tokens": 200, "input_tokens": 0, "cached_input_tokens": 0}, "total_token_usage": {"output_tokens": 1200, "input_tokens": 250, "cached_input_tokens": 40}}}}
+{"type": "response_item", "timestamp": "2026-08-14T09:07:00", "payload": {"type": "message"}}
