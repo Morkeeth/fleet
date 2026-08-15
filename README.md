@@ -82,21 +82,24 @@ And an honest note on where this started: run 1 was not a clean experiment. Ther
 
 ## Try it in one command, on nothing
 
-No config of your own, no agents, no setup. This builds three throwaway repos under `examples/sandbox/` and runs against them:
+No config of your own, no agents, no setup. This builds three throwaway repos under `examples/sandbox/` and runs **all four commands** against them — `open`, `record`, `status`, `cost` — so you see the whole loop close on your own machine rather than reading about it here:
 
 ```sh
 git clone https://github.com/Morkeeth/fleet.git
 cd fleet
-./examples/cold-start.sh            # then --clean to remove the sandbox
+./examples/cold-start.sh            # then --clean to remove the sandbox and state file
 ```
 
 Requires `python3` and `git`. Nothing else. PyYAML is optional — the config works as JSON without it.
 
-## The three commands
+The `cost` step reads two fixture transcripts under `examples/fixtures/` rather than your real logs, so the number it prints is the fixtures' number and nothing of yours is touched. Point `transcripts:` at your own harness logs to get your own.
+
+## The four commands
 
 | | |
 |---|---|
 | `fleet open` | check every project root, print the lane table, flag work that exists nowhere else |
+| `fleet record` | bind a lane's outcome to the artifact that proves it — **typed by you, not by the agent** ([why](RULES.md)) |
 | `fleet status` | what the fleet recorded last, each lane bound to the artifact that proves it |
 | `fleet cost` | real token spend, read from the harness's own logs — and what it did **not** count |
 
@@ -167,6 +170,6 @@ The short version: **probe the artifact before acting on a claim about it**; **c
 
 ## Status
 
-Early. `fleet open` / `status` / `cost` work and are covered by the cold-start script. The Claude Code cost adapter is implemented; Codex and Cursor are declared and say so out loud instead of returning zero.
+Early. `fleet open` / `record` / `status` / `cost` work, and the cold-start script runs every one of them — it used to run only `open` while this line claimed otherwise, which is exactly the rule-1 failure this repo is about. The Claude Code cost adapter is implemented; Codex and Cursor are declared and say so out loud instead of returning zero.
 
 This is a public extraction of a private tool. The private repo keeps the operational records; **none of them are here, and this repo was started with a fresh history rather than by deleting them, because deletion leaves them in the log.**
