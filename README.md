@@ -1,8 +1,14 @@
 # fleet
 
-**You are running several coding agents at once and you cannot see which one is stuck, what any of them actually finished, or what it cost.**
+**fleet is one command that opens, inspects and costs several coding agents at once, so you can see which one is stuck, what each actually finished, and what it cost.**
 
-`fleet` reads one config file and answers those three questions with things it checked, not things an agent told it.
+The problem: run several agents in parallel and the only status you get is what each agent says about itself.
+
+For anyone running several coding agents across several repos from one machine.
+
+It reads one config file and answers from things it checked (branches, dirty trees, commits that exist only on this disk, transcript costs), not from what an agent told it. Four commands: `open`, `record`, `status`, `cost`.
+
+Try it on throwaway repos with nothing of yours touched: `git clone https://github.com/Morkeeth/fleet.git && cd fleet && ./examples/cold-start.sh`
 
 ```
 $ fleet open
