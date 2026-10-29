@@ -34,11 +34,11 @@ $ fleet open
 
   PROJECT           LANE          BRANCH               DIRTY  ONLY HERE  LAST
   ------------------------------------------------------------------------------------
-  api               backend       main                     ;   no remote  2026-08-13|init api
+  api               backend       main                     —  no remote  2026-08-13|init api
   web               frontend      main                     1  no remote  2026-08-13|init web
-  infra             platform      main                     ;   no remote  2026-08-13|init infra
+  infra             platform      main                     —  no remote  2026-08-13|init infra
 
-  ONLY HERE is work that exists on this disk and nowhere else ;  commits no remote
+  ONLY HERE is work that exists on this disk and nowhere else — commits no remote
     ref on this machine has seen, or a repo with no remote at all.
 ```
 
@@ -161,7 +161,7 @@ projects:
   - {name: api, root: ./sandbox/api, lane: backend}
 agents:
   provider: claude-code      # claude-code | codex | cursor
-  transport: local           # local is the only value ;  see below
+  transport: local           # local is the only value — see below
 approval:
   irreversible: ask          # ask | auto | never
   outward_facing: ask
