@@ -8,7 +8,6 @@ The example route uses throwaway repositories; experimental results retain their
 
 ## The problem and approach
 
-**fleet is one command that opens, inspects and costs several coding agents at once, so you can see which one is stuck, what each actually finished, and what it cost.**
 The problem: run several agents in parallel and the only status you get is what each agent says about itself.
 
 It reads one config file and answers from things it checked (branches, dirty trees, commits that exist only on this disk, transcript costs), not from what an agent told it. Four commands: `open`, `record`, `status`, `cost`.
